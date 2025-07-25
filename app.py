@@ -1,25 +1,43 @@
-
 import streamlit as st
 
-st.title("🚛 LKW Gewichtsanalyse")
+st.set_page_config(page_title="LKW Achslast-Rechner", layout="centered")
 
-st.header("🔧 Kalibrierung")
+st.title("🚛 LKW Achslast-Rechner")
 
-leer_volvo = st.number_input("Volvo-Anzeige (leer)", value=12.0)
-leer_waage = st.number_input("Tatsächliches Gewicht (leer)", value=13.2)
-voll_volvo = st.number_input("Volvo-Anzeige (voll)", value=40.0)
-voll_waage = st.number_input("Tatsächliches Gewicht (voll)", value=41.5)
+st.markdown("## 🧮 Kalibrierung")
 
-if voll_volvo != leer_volvo:
-    faktor = (voll_waage - leer_waage) / (voll_volvo - leer_volvo)
-else:
-    faktor = 1.0
+st.info("Bitte die Volvo-Anzeigen und echten Waagenwerte bei Leer- und Volllast eingeben – getrennt nach Zugmaschine und Auflieger.")
 
-st.write(f"⚙️ Automatisch berechneter Korrekturfaktor: `{faktor:.3f}`")
+# Kalibrierung: Zugmaschine
+st.subheader("Zugmaschine")
 
-st.header("📊 Unterwegs-Kontrolle")
+zug_leer_volvo = st.number_input("Volvo-Anzeige leer (Zugmaschine)", value=6.0)
+zug_leer_waage = st.number_input("Echte Waage leer (Zugmaschine)", value=7.0)
+zug_voll_volvo = st.number_input("Volvo-Anzeige voll (Zugmaschine)", value=10.0)
+zug_voll_waage = st.number_input("Echte Waage voll (Zugmaschine)", value=12.0)
 
-aktuelle_volvo = st.number_input("Aktuelle Volvo-Anzeige", value=36.0)
-geschaetztes_gewicht = leer_waage + (aktuelle_volvo - leer_volvo) * faktor
+zug_faktor = (zug_voll_waage - zug_leer_waage) / (zug_voll_volvo - zug_leer_volvo) if zug_voll_volvo != zug_leer_volvo else 1.0
 
-st.success(f"🚦 Geschätztes Gesamtgewicht: **{geschaetztes_gewicht:.2f} t**")
+# Kalibrierung: Auflieger
+st.subheader("Auflieger")
+
+aufl_leer_volvo = st.number_input("Volvo-Anzeige leer (Auflieger)", value=6.0)
+aufl_leer_waage = st.number_input("Echte Waage leer (Auflieger)", value=6.5)
+aufl_voll_volvo = st.number_input("Volvo-Anzeige voll (Auflieger)", value=28.0)
+aufl_voll_waage = st.number_input("Echte Waage voll (Auflieger)", value=29.5)
+
+aufl_faktor = (aufl_voll_waage - aufl_leer_waage) / (aufl_voll_volvo - aufl_leer_volvo) if aufl_voll_volvo != aufl_leer_volvo else 1.0
+
+st.markdown("---")
+st.markdown("## 🚚 Gewicht unterwegs ermitteln")
+
+aktuell_zug_volvo = st.number_input("Aktuelle Volvo-Anzeige (Zugmaschine)", value=9.0)
+aktuell_aufl_volvo = st.number_input("Aktuelle Volvo-Anzeige (Auflieger)", value=27.0)
+
+gewicht_zug = zug_leer_waage + (aktuell_zug_volvo - zug_leer_volvo) * zug_faktor
+gewicht_aufl = aufl_leer_waage + (aktuell_aufl_volvo - aufl_leer_volvo) * aufl_faktor
+gesamtgewicht = gewicht_zug + gewicht_aufl
+
+st.success(f"**Zugmaschine:** {gewicht_zug:.2f} t")
+st.success(f"**Auflieger:** {gewicht_aufl:.2f} t")
+st.success(f"**Gesamtgewicht:** {gesamtgewicht:.2f} t")
