@@ -15,8 +15,7 @@ with st.expander("ℹ️ Info zur Kalibrierung"):
     3. Tragen Sie die Werte unten ein – die App berechnet automatisch Korrekturfaktoren.
     4. Unterwegs reicht dann die Volvo-Anzeige allein, um das reale Gewicht zuverlässig zu bestimmen.
 
-    📌 Diese Kalibrierung muss nur **einmalig** gemacht werden (z. B. bei Fahrzeugwechsel).
-    """")
+    
 
 st.markdown("### Schritt 1: Kalibrierung (einmalig eingeben)")
 col1, col2 = st.columns(2)
