@@ -31,10 +31,15 @@ gewicht_gesamt = round(gewicht_gesamt, 2)
 
 st.success(f"✅ Geschätztes Gesamtgewicht: **{gewicht_gesamt:.2f} t**")
 
-# Antriebsachse prüfen
-if volvo_antriebsachse > 11.5:
-    st.error("❗ Antriebsachslast überschritten (max. 11.5 t)")
-else:
-    st.info("✅ Antriebsachse im grünen Bereich (max. 11.5 t)")
+# Robuste Antriebsachslast-Warnung
+try:
+    achslast = float(volvo_antriebsachse)
+    if achslast > 11.5:
+        st.markdown(f"### 🚨 **Warnung:** Antriebsachslast: {achslast:.1f} t > **11.5 t (Grenzwert)**", unsafe_allow_html=True)
+        st.error("Zugmaschine überladen – bitte entlasten!")
+    else:
+        st.success(f"✅ Antriebsachse OK: {achslast:.1f} t ≤ 11.5 t")
+except Exception as e:
+    st.warning("⚠️ Antriebsachslast konnte nicht geprüft werden.")
 
 st.caption("ℹ️ Die Lenkachse wird im Volvo-Display **nicht** mit Zahlen angezeigt – nur optischer Balken.")
