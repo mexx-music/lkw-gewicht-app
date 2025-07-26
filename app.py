@@ -1,53 +1,49 @@
 import streamlit as st
 
-st.set_page_config(page_title="Volvo Gewicht mit Kalibrierung", layout="centered")
+st.title("🚛 LKW Gewichtsanalyse")
 
-st.title("🚛 Volvo Gewicht – mit Kalibrierung & Verbundwaage")
+st.header("🛠️ Kalibrierung")
 
-with st.expander("ℹ️ Info zur Kalibrierung"):
-    st.markdown("""
-    **So funktioniert’s:**
+kennzeichen = st.text_input("Kennzeichen (optional)", placeholder="z. B. W123XYZ")
 
-    1. Fahren Sie **leer** auf eine Verbundwaage:
-       - Zugmaschine separat wiegen
-       - Auflieger separat wiegen
-    2. Notieren Sie gleichzeitig die **Volvo-Anzeige** (Zug & Auflieger)
-    3. Tragen Sie die Werte unten ein – die App berechnet automatisch Korrekturfaktoren.
-    4. Unterwegs reicht dann die Volvo-Anzeige allein, um das reale Gewicht zuverlässig zu bestimmen.
+# Eingaben für Leergewicht
+st.subheader("🔹 Leerfahrt")
+leer_volvo_tractor = st.number_input("Volvo-Anzeige Zugmaschine (leer)", value=4.7)
+leer_volvo_trailer = st.number_input("Volvo-Anzeige Auflieger (leer)", value=6.6)
+leer_waage_tractor = st.number_input("Tatsächliches Gewicht Zugmaschine (leer)", value=5.1)
+leer_waage_trailer = st.number_input("Tatsächliches Gewicht Auflieger (leer)", value=7.1)
 
-    
+# Eingaben für Volllast
+st.subheader("🔸 Volllast")
+voll_volvo_tractor = st.number_input("Volvo-Anzeige Zugmaschine (voll)", value=12.1)
+voll_volvo_trailer = st.number_input("Volvo-Anzeige Auflieger (voll)", value=19.7)
+voll_waage_tractor = st.number_input("Tatsächliches Gewicht Zugmaschine (voll)", value=12.9)
+voll_waage_trailer = st.number_input("Tatsächliches Gewicht Auflieger (voll)", value=20.6)
 
-st.markdown("### Schritt 1: Kalibrierung (einmalig eingeben)")
-col1, col2 = st.columns(2)
-with col1:
-    volvo_zug_leer = st.number_input("Volvo-Anzeige Zugmaschine leer (t)", 0.0, 40.0, 11.3, 0.1)
-    real_zug_leer = st.number_input("Reale Waage Zugmaschine leer (t)", 0.0, 40.0, 14.5, 0.1)
-with col2:
-    volvo_auflieger_leer = st.number_input("Volvo-Anzeige Auflieger leer (t)", 0.0, 40.0, 7.9, 0.1)
-    real_auflieger_leer = st.number_input("Reale Waage Auflieger leer (t)", 0.0, 40.0, 8.4, 0.1)
+# Berechnung Korrekturfaktor
+try:
+    faktor_tractor = (voll_waage_tractor - leer_waage_tractor) / (voll_volvo_tractor - leer_volvo_tractor)
+    faktor_trailer = (voll_waage_trailer - leer_waage_trailer) / (voll_volvo_trailer - leer_volvo_trailer)
+except ZeroDivisionError:
+    faktor_tractor = 1.0
+    faktor_trailer = 1.0
 
-st.markdown("### Schritt 2: Volvo-Anzeige unterwegs")
-kennzeichen = st.text_input("Kennzeichen (optional)", "")
-volvo_zug_aktuell = st.number_input("Aktuelle Volvo-Zugmaschine (t)", 0.0, 40.0, 12.0, 0.1)
-volvo_auflieger_aktuell = st.number_input("Aktueller Volvo-Auflieger (t)", 0.0, 40.0, 24.0, 0.1)
+st.write(f"🔧 Korrekturfaktor Zugmaschine: `{faktor_tractor:.3f}`")
+st.write(f"🔧 Korrekturfaktor Auflieger: `{faktor_trailer:.3f}`")
 
-# Korrekturfaktoren berechnen
-faktor_zug = real_zug_leer / volvo_zug_leer if volvo_zug_leer > 0 else 1.0
-faktor_auflieger = real_auflieger_leer / volvo_auflieger_leer if volvo_auflieger_leer > 0 else 1.0
+st.header("📊 Unterwegs-Kontrolle")
 
-# Korrigierte Werte
-real_zug = volvo_zug_aktuell * faktor_zug
-real_auflieger = volvo_auflieger_aktuell * faktor_auflieger
-gesamtgewicht = real_zug + real_auflieger
+aktuell_volvo_tractor = st.number_input("Aktuelle Volvo-Anzeige Zugmaschine", value=10.0)
+aktuell_volvo_trailer = st.number_input("Aktuelle Volvo-Anzeige Auflieger", value=18.0)
 
-st.subheader("📊 Ergebnis")
-st.markdown(f"**Korrigiertes Gewicht (geschätzt):** `{gesamtgewicht:.2f} t`")
+# Berechnung aktuelles Gewicht
+gewicht_tractor = (aktuell_volvo_tractor - leer_volvo_tractor) * faktor_tractor + leer_waage_tractor
+gewicht_trailer = (aktuell_volvo_trailer - leer_volvo_trailer) * faktor_trailer + leer_waage_trailer
+gesamtgewicht = gewicht_tractor + gewicht_trailer
+
+st.success(f"✅ Geschätztes Gewicht Zugmaschine: **{gewicht_tractor:.2f} t**")
+st.success(f"✅ Geschätztes Gewicht Auflieger: **{gewicht_trailer:.2f} t**")
+st.markdown(f"### 🔽 **Gesamtgewicht:** `{gesamtgewicht:.2f} t`")
 
 if kennzeichen:
-    st.caption(f"Fahrzeug: **{kennzeichen.upper()}**")
-
-with st.expander("Details"):
-    st.write(f"Zugmaschine (korrigiert): {real_zug:.2f} t")
-    st.write(f"Auflieger (korrigiert): {real_auflieger:.2f} t")
-    st.write(f"Faktor Zugmaschine: {faktor_zug:.3f}")
-    st.write(f"Faktor Auflieger: {faktor_auflieger:.3f}")
+    st.markdown(f"🚚 Fahrzeug: **{kennzeichen}**")
