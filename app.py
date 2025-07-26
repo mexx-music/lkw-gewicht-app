@@ -1,43 +1,54 @@
+
 import streamlit as st
 
-st.set_page_config(page_title="LKW Achslast-Rechner", layout="centered")
+st.set_page_config(page_title="Volvo Gewichtsschätzung", layout="centered")
 
-st.title("🚛 LKW Achslast-Rechner")
+st.title("🚛 Volvo Gewichtsschätzung – Kalibrierte Version")
+st.markdown("Gib die **Volvo-Anzeige**, **Tankfüllung** und optional die **Auflieger-Korrektur** ein.")
 
-st.markdown("## 🧮 Kalibrierung")
+# Eingaben
+volvo_zug = st.number_input("Volvo-Anzeige Zugmaschine (t)", min_value=0.0, max_value=40.0, value=11.3, step=0.1)
+volvo_auflieger = st.number_input("Volvo-Anzeige Auflieger (t)", min_value=0.0, max_value=40.0, value=7.9, step=0.1)
+tank_zug = st.slider("Tankfüllung Zugmaschine (%)", 0, 100, 60)
+tank_kuehler = st.slider("Tankfüllung Kühlaggregat (%)", 0, 100, 80)
+auflieger_korrektur = st.slider("Aufliegergewichtskorrektur (optional, kg)", -1000, 1000, 0, step=100)
 
-st.info("Bitte die Volvo-Anzeigen und echten Waagenwerte bei Leer- und Volllast eingeben – getrennt nach Zugmaschine und Auflieger.")
+# Kalibrierte Referenzwerte
+volvo_zug_ref = 11.3
+real_zug_ref = 14.5
+volvo_auflieger_ref = 7.9
+real_auflieger_ref = 8.4
 
-# Kalibrierung: Zugmaschine
-st.subheader("Zugmaschine")
+# Tankdaten
+tankvolumen_zug = 800  # Liter
+tankvolumen_kuehler = 240  # Liter
+diesel_dichte = 0.84  # kg/l
 
-zug_leer_volvo = st.number_input("Volvo-Anzeige leer (Zugmaschine)", value=6.0)
-zug_leer_waage = st.number_input("Echte Waage leer (Zugmaschine)", value=7.0)
-zug_voll_volvo = st.number_input("Volvo-Anzeige voll (Zugmaschine)", value=10.0)
-zug_voll_waage = st.number_input("Echte Waage voll (Zugmaschine)", value=12.0)
+# Korrekturfaktoren
+faktor_zug = real_zug_ref / volvo_zug_ref
+faktor_auflieger = real_auflieger_ref / volvo_auflieger_ref
 
-zug_faktor = (zug_voll_waage - zug_leer_waage) / (zug_voll_volvo - zug_leer_volvo) if zug_voll_volvo != zug_leer_volvo else 1.0
+# Tankgewicht
+tankgewicht_zug = (tank_zug / 100) * tankvolumen_zug * diesel_dichte / 1000
+tankgewicht_kuehler = (tank_kuehler / 100) * tankvolumen_kuehler * diesel_dichte / 1000
+tankgewicht_gesamt = tankgewicht_zug + tankgewicht_kuehler
 
-# Kalibrierung: Auflieger
-st.subheader("Auflieger")
+# Berechnung
+real_zug = volvo_zug * faktor_zug
+real_auflieger = volvo_auflieger * faktor_auflieger + auflieger_korrektur / 1000
+gesamtgewicht = real_zug + real_auflieger
 
-aufl_leer_volvo = st.number_input("Volvo-Anzeige leer (Auflieger)", value=6.0)
-aufl_leer_waage = st.number_input("Echte Waage leer (Auflieger)", value=6.5)
-aufl_voll_volvo = st.number_input("Volvo-Anzeige voll (Auflieger)", value=28.0)
-aufl_voll_waage = st.number_input("Echte Waage voll (Auflieger)", value=29.5)
+# Tankkorrektur
+ref_tankgewicht = (0.6 * tankvolumen_zug + 0.8 * tankvolumen_kuehler) * diesel_dichte / 1000
+tankdifferenz = tankgewicht_gesamt - ref_tankgewicht
+gesamtgewicht_korrigiert = gesamtgewicht + tankdifferenz
 
-aufl_faktor = (aufl_voll_waage - aufl_leer_waage) / (aufl_voll_volvo - aufl_leer_volvo) if aufl_voll_volvo != aufl_leer_volvo else 1.0
+# Anzeige
+st.subheader("📊 Ergebnis")
+st.markdown(f"**Korrigiertes realistisches Gewicht:** `{gesamtgewicht_korrigiert:.2f} t`")
+st.caption(f"(Enthält Tankkorrektur von {tankdifferenz:+.2f} t und Aufliegerkorrektur von {auflieger_korrektur:+} kg)")
 
-st.markdown("---")
-st.markdown("## 🚚 Gewicht unterwegs ermitteln")
-
-aktuell_zug_volvo = st.number_input("Aktuelle Volvo-Anzeige (Zugmaschine)", value=9.0)
-aktuell_aufl_volvo = st.number_input("Aktuelle Volvo-Anzeige (Auflieger)", value=27.0)
-
-gewicht_zug = zug_leer_waage + (aktuell_zug_volvo - zug_leer_volvo) * zug_faktor
-gewicht_aufl = aufl_leer_waage + (aktuell_aufl_volvo - aufl_leer_volvo) * aufl_faktor
-gesamtgewicht = gewicht_zug + gewicht_aufl
-
-st.success(f"**Zugmaschine:** {gewicht_zug:.2f} t")
-st.success(f"**Auflieger:** {gewicht_aufl:.2f} t")
-st.success(f"**Gesamtgewicht:** {gesamtgewicht:.2f} t")
+with st.expander("Details"):
+    st.write(f"Zugmaschine (korrigiert): {real_zug:.2f} t")
+    st.write(f"Auflieger (korrigiert inkl. Offset): {real_auflieger:.2f} t")
+    st.write(f"Tankgewicht gesamt: {tankgewicht_gesamt:.2f} t")
