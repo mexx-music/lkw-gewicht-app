@@ -52,3 +52,4 @@ with st.expander("Details"):
     st.write(f"Zugmaschine (korrigiert): {real_zug:.2f} t")
     st.write(f"Auflieger (korrigiert inkl. Offset): {real_auflieger:.2f} t")
     st.write(f"Tankgewicht gesamt: {tankgewicht_gesamt:.2f} t")
+
