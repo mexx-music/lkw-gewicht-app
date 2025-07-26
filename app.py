@@ -12,7 +12,11 @@ if st.button("🔁 Kalibrierung für dieses Fahrzeug zurücksetzen"):
     st.session_state["kalibrierung"][kennzeichen] = {}
 
 # --- Datensatz für dieses Fahrzeug abrufen (oder neu anlegen) ---
-truck_data = st.session_state["kalibrierung"].get(kennzeichen, {})
+if truck_data:
+    st.success(f"Aktuelle Kalibrierung für {kennzeichen}:")
+    st.json(truck_data)
+else:
+    st.info("ℹ️ Noch keine Kalibrierung vorhanden. Bitte Werte eingeben.")
 
 # --- Typ-Auswahl (Zugmaschine oder Auflieger) ---
 st.markdown("### 🛠️ Kalibrierung – Leer und Voll")
