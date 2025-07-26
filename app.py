@@ -1,50 +1,52 @@
 import streamlit as st
 
-st.title("🚛 LKW-Gewichtsanalyse (Kalibrierung + Schätzung)")
+st.set_page_config(page_title="LKW-Gewichtsanalyse", page_icon="🚛")
+st.title("🚛 LKW-Gewichtsanalyse – Kalibriert & Echtzeit")
 
-st.header("🔧 Kalibrierung mit realen Werten")
+st.header("🧪 Kalibrierung mit Herstellerschätzung")
 
-# Eingaben leerer Zustand (Volvo Anzeige + echte Waage)
-leer_antriebsachse = st.number_input("Volvo-Anzeige (Antriebsachse, leer)", value=4.7)
-leer_auflieger = st.number_input("Volvo-Anzeige (Auflieger gesamt, leer)", value=6.6)
-leer_gesamt_real = st.number_input("Gesamtgewicht laut echter Waage (leer)", value=14.6)
+# Herstellerschätzwerte als Default
+leer_antrieb_volvo = st.number_input("Volvo-Anzeige Antriebsachse (leer)", value=4.7)
+leer_auflieger_volvo = st.number_input("Volvo-Anzeige Auflieger (leer)", value=6.6)
+leer_waage_zug = st.number_input("Zugmaschine: echte Waage (leer)", value=7.8)
+leer_waage_auflieger = st.number_input("Auflieger: echte Waage (leer)", value=6.8)
 
-# Automatisch berechnete Lenkachse (geschätzt)
-leer_lenkachse = leer_gesamt_real - (leer_antriebsachse + leer_auflieger)
-st.write(f"🔍 Geschätztes Gewicht Lenkachse: **{leer_lenkachse:.2f} t**")
+voll_antrieb_volvo = st.number_input("Volvo-Anzeige Antriebsachse (voll)", value=9.5)
+voll_auflieger_volvo = st.number_input("Volvo-Anzeige Auflieger (voll)", value=27.0)
+voll_waage_zug = st.number_input("Zugmaschine: echte Waage (voll)", value=9.9)
+voll_waage_auflieger = st.number_input("Auflieger: echte Waage (voll)", value=30.3)
 
-# Eingaben voller Zustand (Volvo Anzeige + echte Waage)
-st.header("🔧 Kalibrierung voll beladen")
-voll_antriebsachse = st.number_input("Volvo-Anzeige (Antriebsachse, voll)", value=9.5)
-voll_auflieger = st.number_input("Volvo-Anzeige (Auflieger gesamt, voll)", value=27.0)
-voll_gesamt_real = st.number_input("Gesamtgewicht laut echter Waage (voll)", value=40.2)
+# Korrekturfaktoren berechnen
+delta_antrieb_volvo = voll_antrieb_volvo - leer_antrieb_volvo
+delta_antrieb_waage = voll_waage_zug - leer_waage_zug
+faktor_antrieb = delta_antrieb_waage / delta_antrieb_volvo if delta_antrieb_volvo else 1.0
 
-# Kalibrierfaktor berechnen
-anzeige_leer = leer_antriebsachse + leer_auflieger
-anzeige_voll = voll_antriebsachse + voll_auflieger
+delta_auflieger_volvo = voll_auflieger_volvo - leer_auflieger_volvo
+delta_auflieger_waage = voll_waage_auflieger - leer_waage_auflieger
+faktor_auflieger = delta_auflieger_waage / delta_auflieger_volvo if delta_auflieger_volvo else 1.0
 
-if anzeige_voll != anzeige_leer:
-    faktor = (voll_gesamt_real - leer_gesamt_real) / (anzeige_voll - anzeige_leer)
-else:
-    faktor = 1.0
+st.success(f"📐 Faktor Antriebsachse: **{faktor_antrieb:.3f}**")
+st.success(f"📐 Faktor Auflieger: **{faktor_auflieger:.3f}**")
 
-st.success(f"📐 Automatisch berechneter Kalibrierfaktor: **{faktor:.3f}**")
+# Eingabe unterwegs
+st.header("🚚 Unterwegs-Wiegung")
 
-# Aktuelle Messung unterwegs
-st.header("🚚 Unterwegs-Gewicht berechnen")
-aktuell_antriebsachse = st.number_input("Aktuelle Volvo-Anzeige Antriebsachse", value=7.5)
-aktuell_auflieger = st.number_input("Aktuelle Volvo-Anzeige Auflieger gesamt", value=20.0)
+aktuell_antrieb_volvo = st.number_input("Aktuelle Antriebsachse (Volvo)", value=7.5)
+aktuell_auflieger_volvo = st.number_input("Aktuelle Auflieger (Volvo)", value=20.0)
 
-aktuell_gesamt = leer_gesamt_real + faktor * ((aktuell_antriebsachse + aktuell_auflieger) - anzeige_leer)
+real_zuggewicht = leer_waage_zug + faktor_antrieb * (aktuell_antrieb_volvo - leer_antrieb_volvo)
+real_aufliegergewicht = leer_waage_auflieger + faktor_auflieger * (aktuell_auflieger_volvo - leer_auflieger_volvo)
+real_gesamt = real_zuggewicht + real_aufliegergewicht
 
-st.info(f"📊 Geschätztes aktuelles Gesamtgewicht: **{aktuell_gesamt:.2f} t**")
+st.info(f"📊 Zugmaschine real: **{real_zuggewicht:.2f} t**")
+st.info(f"📊 Auflieger real: **{real_aufliegergewicht:.2f} t**")
+st.success(f"📦 Gesamtgewicht real: **{real_gesamt:.2f} t**")
 
-# Warnung bei Antriebsachse über 11.5 t (je nach Land)
-grenze = 11.5
-if aktuell_antriebsachse * faktor > grenze:
-    st.error(f"⚠️ ACHTUNG: Antriebsachse über {grenze} t! ({aktuell_antriebsachse * faktor:.2f} t)")
+# Warnung bei Antriebsachse > 11.5 t
+if real_zuggewicht > 11.5:
+    st.error(f"⚠️ ANTRIEBSACHSE ÜBERLADEN! ({real_zuggewicht:.2f} t)")
 
-# Optional: Kennzeichen eingeben
+# Kennzeichen (optional)
 kennzeichen = st.text_input("Kennzeichen (optional)")
 if kennzeichen:
-    st.write(f"📌 Fahrzeugkennung: **{kennzeichen}**")
+    st.write(f"📌 Fahrzeug: **{kennzeichen}**")
