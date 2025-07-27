@@ -35,10 +35,13 @@ def speichere_daten(daten):
 
 def berechne_kalibrierung(volvo1, real1, volvo2, real2, optional_volvo=0.0, optional_real=0.0):
     if optional_volvo > 0 and optional_real > 0:
+        # Drei-Punkt-Kalibrierung über lineare Regression
         x = [volvo1, optional_volvo, volvo2]
         y = [real1, optional_real, real2]
-        a = sum((x[i] - sum(x)/3)*(y[i] - sum(y)/3) for i in range(3)) / sum((x[i] - sum(x)/3)**2 for i in range(3))
-        b = sum(y)/3 - a * sum(x)/3
+        xm = sum(x) / 3
+        ym = sum(y) / 3
+        a = sum((x[i] - xm)*(y[i] - ym) for i in range(3)) / sum((x[i] - xm)**2 for i in range(3))
+        b = ym - a * xm
         return a, b
     elif volvo2 - volvo1 == 0:
         return 1.0, 0.0
@@ -49,7 +52,7 @@ def berechne_kalibrierung(volvo1, real1, volvo2, real2, optional_volvo=0.0, opti
 
 kennzeichen = st.text_input("Kennzeichen eingeben:", value="W-12345")
 alle_daten = lade_daten()
-daten = {**default_values, **alle_daten.get(kennzeichen, {})}
+daten = alle_daten.get(kennzeichen, default_values)
 
 st.header("🔧 Kalibrierung – Leer, Voll, Teilbeladung")
 
@@ -92,7 +95,7 @@ st.header("📥 Eingabe aktueller Volvo-Werte")
 volvo_now_antrieb = st.number_input("Aktuelle Volvo-Anzeige – Zugmaschine", value=voll_volvo_antrieb)
 volvo_now_auflieger = st.number_input("Aktuelle Volvo-Anzeige – Auflieger", value=voll_volvo_auflieger)
 
-# Umrechnung anhand Kalibrierung
+# Umrechnung
 a1, b1 = berechne_kalibrierung(leer_volvo_antrieb, leer_real_antrieb, voll_volvo_antrieb, voll_real_antrieb, teilbeladung_volvo_antrieb, teilbeladung_real_antrieb)
 a2, b2 = berechne_kalibrierung(leer_volvo_auflieger, leer_real_auflieger, voll_volvo_auflieger, voll_real_auflieger, teilbeladung_volvo_auflieger, teilbeladung_real_auflieger)
 
@@ -106,7 +109,14 @@ st.write(f"🚛 Zugmaschine: **{real_antrieb:.2f} t**")
 st.write(f"🛻 Auflieger: **{real_auflieger:.2f} t**")
 st.write(f"📦 Gesamtgewicht: **{real_gesamt:.2f} t**")
 
-if real_antrieb > 11.5:
-    st.error("⚠️ Achtung: Antriebsachse überladen (> 11.5 t)")
+# Überladung anzeigen
+MAX_ANTRIEBSACHSE = 11.5
+ueberladung_kg = max(0, (real_antrieb - MAX_ANTRIEBSACHSE) * 1000)
+ueberladung_prozent = max(0, (real_antrieb - MAX_ANTRIEBSACHSE) / MAX_ANTRIEBSACHSE * 100)
+
+if ueberladung_kg > 0:
+    st.error(f"⚠️ Antriebsachse überladen: **{ueberladung_kg:.0f} kg** / **{ueberladung_prozent:.1f} %** über dem Limit!")
+else:
+    st.success("✅ Antriebsachse im grünen Bereich")
 
 st.info("ℹ️ Hinweis: Teilbeladung ist optional – Felder leer lassen oder 0 eingeben, wenn keine Mittelwerte vorhanden sind.")
