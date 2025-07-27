@@ -7,7 +7,6 @@ st.title("🚛 LKW-Gewicht aus Volvo-Anzeige")
 
 DATEI = "kalibrierung.json"
 
-# Startwerte – neutral (alle auf 0.0)
 default_values = {
     "leer_volvo_antrieb": 0.0,
     "leer_real_antrieb": 0.0,
@@ -51,20 +50,20 @@ daten = alle_daten.get(kennzeichen, default_values)
 st.header("🔧 Kalibrierung – Leer, Mittel, Voll")
 
 with st.expander("Zugmaschine (Antriebsachse)"):
-    leer_volvo_antrieb = st.number_input("Volvo Anzeige leer", value=daten["leer_volvo_antrieb"])
-    leer_real_antrieb = st.number_input("Waage leer", value=daten["leer_real_antrieb"])
-    mittel_volvo_antrieb = st.number_input("Volvo Anzeige teilbeladen (optional)", value=daten["mittel_volvo_antrieb"])
-    mittel_real_antrieb = st.number_input("Waage teilbeladen (optional)", value=daten["mittel_real_antrieb"])
-    voll_volvo_antrieb = st.number_input("Volvo Anzeige voll", value=daten["voll_volvo_antrieb"])
-    voll_real_antrieb = st.number_input("Waage voll", value=daten["voll_real_antrieb"])
+    leer_volvo_antrieb = st.number_input("Volvo Anzeige leer", value=daten["leer_volvo_antrieb"], key="leer_volvo_antrieb")
+    leer_real_antrieb = st.number_input("Waage leer", value=daten["leer_real_antrieb"], key="leer_real_antrieb")
+    mittel_volvo_antrieb = st.number_input("Volvo Anzeige teilbeladen (optional)", value=daten["mittel_volvo_antrieb"], key="mittel_volvo_antrieb")
+    mittel_real_antrieb = st.number_input("Waage teilbeladen (optional)", value=daten["mittel_real_antrieb"], key="mittel_real_antrieb")
+    voll_volvo_antrieb = st.number_input("Volvo Anzeige voll", value=daten["voll_volvo_antrieb"], key="voll_volvo_antrieb")
+    voll_real_antrieb = st.number_input("Waage voll", value=daten["voll_real_antrieb"], key="voll_real_antrieb")
 
 with st.expander("Auflieger"):
-    leer_volvo_auflieger = st.number_input("Volvo Anzeige leer (Auflieger)", value=daten["leer_volvo_auflieger"])
-    leer_real_auflieger = st.number_input("Waage leer (Auflieger)", value=daten["leer_real_auflieger"])
-    mittel_volvo_auflieger = st.number_input("Volvo Anzeige teilbeladen (optional)", value=daten["mittel_volvo_auflieger"])
-    mittel_real_auflieger = st.number_input("Waage teilbeladen (optional)", value=daten["mittel_real_auflieger"])
-    voll_volvo_auflieger = st.number_input("Volvo Anzeige voll (Auflieger)", value=daten["voll_volvo_auflieger"])
-    voll_real_auflieger = st.number_input("Waage voll (Auflieger)", value=daten["voll_real_auflieger"])
+    leer_volvo_auflieger = st.number_input("Volvo Anzeige leer (Auflieger)", value=daten["leer_volvo_auflieger"], key="leer_volvo_auflieger")
+    leer_real_auflieger = st.number_input("Waage leer (Auflieger)", value=daten["leer_real_auflieger"], key="leer_real_auflieger")
+    mittel_volvo_auflieger = st.number_input("Volvo Anzeige teilbeladen (optional)", value=daten["mittel_volvo_auflieger"], key="mittel_volvo_auflieger")
+    mittel_real_auflieger = st.number_input("Waage teilbeladen (optional)", value=daten["mittel_real_auflieger"], key="mittel_real_auflieger")
+    voll_volvo_auflieger = st.number_input("Volvo Anzeige voll (Auflieger)", value=daten["voll_volvo_auflieger"], key="voll_volvo_auflieger")
+    voll_real_auflieger = st.number_input("Waage voll (Auflieger)", value=daten["voll_real_auflieger"], key="voll_real_auflieger")
 
 if st.button("💾 Kalibrierung speichern"):
     alle_daten[kennzeichen] = {
@@ -86,13 +85,13 @@ if st.button("💾 Kalibrierung speichern"):
 
 st.header("📥 Aktuelle Volvo-Werte eingeben")
 
-volvo_now_antrieb = st.number_input("Aktuelle Volvo-Anzeige – Antriebsachse", value=voll_volvo_antrieb)
-volvo_now_auflieger = st.number_input("Aktuelle Volvo-Anzeige – Auflieger", value=voll_volvo_auflieger)
+volvo_now_antrieb = st.number_input("Aktuelle Volvo-Anzeige – Antriebsachse", value=voll_volvo_antrieb, key="volvo_now_antrieb")
+volvo_now_auflieger = st.number_input("Aktuelle Volvo-Anzeige – Auflieger", value=voll_volvo_auflieger, key="volvo_now_auflieger")
 
-# Kalibrierung berechnen
 punkte_antrieb = [(leer_volvo_antrieb, leer_real_antrieb),
                   (mittel_volvo_antrieb, mittel_real_antrieb),
                   (voll_volvo_antrieb, voll_real_antrieb)]
+
 punkte_auflieger = [(leer_volvo_auflieger, leer_real_auflieger),
                     (mittel_volvo_auflieger, mittel_real_auflieger),
                     (voll_volvo_auflieger, voll_real_auflieger)]
