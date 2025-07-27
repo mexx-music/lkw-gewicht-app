@@ -37,10 +37,8 @@ def berechne_kalibrierung(volvo1, real1, volvo2, real2, optional_volvo=0.0, opti
     if optional_volvo > 0 and optional_real > 0:
         x = [volvo1, optional_volvo, volvo2]
         y = [real1, optional_real, real2]
-        avg_x = sum(x) / 3
-        avg_y = sum(y) / 3
-        a = sum((x[i] - avg_x) * (y[i] - avg_y) for i in range(3)) / sum((x[i] - avg_x)**2 for i in range(3))
-        b = avg_y - a * avg_x
+        a = sum((x[i] - sum(x)/3)*(y[i] - sum(y)/3) for i in range(3)) / sum((x[i] - sum(x)/3)**2 for i in range(3))
+        b = sum(y)/3 - a * sum(x)/3
         return a, b
     elif volvo2 - volvo1 == 0:
         return 1.0, 0.0
@@ -51,8 +49,6 @@ def berechne_kalibrierung(volvo1, real1, volvo2, real2, optional_volvo=0.0, opti
 
 kennzeichen = st.text_input("Kennzeichen eingeben:", value="W-12345")
 alle_daten = lade_daten()
-
-# Fallback auf default_values bei fehlenden Feldern
 daten = {**default_values, **alle_daten.get(kennzeichen, {})}
 
 st.header("🔧 Kalibrierung – Leer, Voll, Teilbeladung")
@@ -96,10 +92,9 @@ st.header("📥 Eingabe aktueller Volvo-Werte")
 volvo_now_antrieb = st.number_input("Aktuelle Volvo-Anzeige – Zugmaschine", value=voll_volvo_antrieb)
 volvo_now_auflieger = st.number_input("Aktuelle Volvo-Anzeige – Auflieger", value=voll_volvo_auflieger)
 
-a1, b1 = berechne_kalibrierung(leer_volvo_antrieb, leer_real_antrieb, voll_volvo_antrieb, voll_real_antrieb,
-                               teilbeladung_volvo_antrieb, teilbeladung_real_antrieb)
-a2, b2 = berechne_kalibrierung(leer_volvo_auflieger, leer_real_auflieger, voll_volvo_auflieger, voll_real_auflieger,
-                               teilbeladung_volvo_auflieger, teilbeladung_real_auflieger)
+# Umrechnung anhand Kalibrierung
+a1, b1 = berechne_kalibrierung(leer_volvo_antrieb, leer_real_antrieb, voll_volvo_antrieb, voll_real_antrieb, teilbeladung_volvo_antrieb, teilbeladung_real_antrieb)
+a2, b2 = berechne_kalibrierung(leer_volvo_auflieger, leer_real_auflieger, voll_volvo_auflieger, voll_real_auflieger, teilbeladung_volvo_auflieger, teilbeladung_real_auflieger)
 
 real_antrieb = volvo_now_antrieb * a1 + b1
 real_auflieger = volvo_now_auflieger * a2 + b2
