@@ -7,19 +7,16 @@ st.title("🚛 LKW-Gewicht aus Volvo-Anzeige")
 
 DATEI = "kalibrierung.json"
 
+# Startwerte – realistisch geschätzt
 default_values = {
-    "leer_volvo_antrieb": 0.0,
-    "leer_real_antrieb": 0.0,
-    "mittel_volvo_antrieb": 0.0,
-    "mittel_real_antrieb": 0.0,
-    "voll_volvo_antrieb": 0.0,
-    "voll_real_antrieb": 0.0,
-    "leer_volvo_auflieger": 0.0,
-    "leer_real_auflieger": 0.0,
-    "mittel_volvo_auflieger": 0.0,
-    "mittel_real_auflieger": 0.0,
-    "voll_volvo_auflieger": 0.0,
-    "voll_real_auflieger": 0.0
+    "leer_volvo_antrieb": 4.7,
+    "leer_real_antrieb": 7.5,
+    "voll_volvo_antrieb": 7.9,
+    "voll_real_antrieb": 11.3,
+    "leer_volvo_auflieger": 6.6,
+    "leer_real_auflieger": 8.5,
+    "voll_volvo_auflieger": 19.0,
+    "voll_real_auflieger": 27.5
 }
 
 def lade_daten():
@@ -32,72 +29,56 @@ def speichere_daten(daten):
     with open(DATEI, "w") as f:
         json.dump(daten, f)
 
-def berechne_kalibrierung(punkte):
-    gefiltert = [(v, r) for v, r in punkte if v > 0 and r > 0]
-    if len(gefiltert) < 2:
+def berechne_kalibrierung(volvo1, real1, volvo2, real2):
+    if volvo2 - volvo1 == 0:
         return 1.0, 0.0
-    x = [v for v, _ in gefiltert]
-    y = [r for _, r in gefiltert]
-    a = (y[-1] - y[0]) / (x[-1] - x[0]) if x[-1] != x[0] else 1.0
-    b = y[0] - a * x[0]
+    a = (real2 - real1) / (volvo2 - volvo1)
+    b = real1 - a * volvo1
     return a, b
 
-kennzeichen = st.text_input("Kennzeichen eingeben:", value="")
-
+kennzeichen = st.text_input("Kennzeichen eingeben:", value="W-12345")
 alle_daten = lade_daten()
 daten = alle_daten.get(kennzeichen, default_values)
 
-st.header("🔧 Kalibrierung – Leer, Mittel, Voll")
+st.header("🔧 Kalibrierung – Leer und Voll")
 
 with st.expander("Zugmaschine (Antriebsachse)"):
-    leer_volvo_antrieb = st.number_input("Volvo Anzeige leer", value=daten["leer_volvo_antrieb"], key="leer_volvo_antrieb")
-    leer_real_antrieb = st.number_input("Waage leer", value=daten["leer_real_antrieb"], key="leer_real_antrieb")
-    mittel_volvo_antrieb = st.number_input("Volvo Anzeige teilbeladen (optional)", value=daten["mittel_volvo_antrieb"], key="mittel_volvo_antrieb")
-    mittel_real_antrieb = st.number_input("Waage teilbeladen (optional)", value=daten["mittel_real_antrieb"], key="mittel_real_antrieb")
-    voll_volvo_antrieb = st.number_input("Volvo Anzeige voll", value=daten["voll_volvo_antrieb"], key="voll_volvo_antrieb")
-    voll_real_antrieb = st.number_input("Waage voll", value=daten["voll_real_antrieb"], key="voll_real_antrieb")
+    leer_volvo_antrieb = st.number_input("Volvo Anzeige leer", value=daten["leer_volvo_antrieb"])
+    leer_real_antrieb = st.number_input("Waage leer", value=daten["leer_real_antrieb"])
+    voll_volvo_antrieb = st.number_input("Volvo Anzeige voll", value=daten["voll_volvo_antrieb"])
+    voll_real_antrieb = st.number_input("Waage voll", value=daten["voll_real_antrieb"])
 
 with st.expander("Auflieger"):
-    leer_volvo_auflieger = st.number_input("Volvo Anzeige leer (Auflieger)", value=daten["leer_volvo_auflieger"], key="leer_volvo_auflieger")
-    leer_real_auflieger = st.number_input("Waage leer (Auflieger)", value=daten["leer_real_auflieger"], key="leer_real_auflieger")
-    mittel_volvo_auflieger = st.number_input("Volvo Anzeige teilbeladen (optional)", value=daten["mittel_volvo_auflieger"], key="mittel_volvo_auflieger")
-    mittel_real_auflieger = st.number_input("Waage teilbeladen (optional)", value=daten["mittel_real_auflieger"], key="mittel_real_auflieger")
-    voll_volvo_auflieger = st.number_input("Volvo Anzeige voll (Auflieger)", value=daten["voll_volvo_auflieger"], key="voll_volvo_auflieger")
-    voll_real_auflieger = st.number_input("Waage voll (Auflieger)", value=daten["voll_real_auflieger"], key="voll_real_auflieger")
+    leer_volvo_auflieger = st.number_input("Volvo Anzeige leer (Auflieger)", value=daten["leer_volvo_auflieger"])
+    leer_real_auflieger = st.number_input("Waage leer (Auflieger)", value=daten["leer_real_auflieger"])
+    voll_volvo_auflieger = st.number_input("Volvo Anzeige voll (Auflieger)", value=daten["voll_volvo_auflieger"])
+    voll_real_auflieger = st.number_input("Waage voll (Auflieger)", value=daten["voll_real_auflieger"])
 
 if st.button("💾 Kalibrierung speichern"):
     alle_daten[kennzeichen] = {
         "leer_volvo_antrieb": leer_volvo_antrieb,
         "leer_real_antrieb": leer_real_antrieb,
-        "mittel_volvo_antrieb": mittel_volvo_antrieb,
-        "mittel_real_antrieb": mittel_real_antrieb,
         "voll_volvo_antrieb": voll_volvo_antrieb,
         "voll_real_antrieb": voll_real_antrieb,
         "leer_volvo_auflieger": leer_volvo_auflieger,
         "leer_real_auflieger": leer_real_auflieger,
-        "mittel_volvo_auflieger": mittel_volvo_auflieger,
-        "mittel_real_auflieger": mittel_real_auflieger,
         "voll_volvo_auflieger": voll_volvo_auflieger,
         "voll_real_auflieger": voll_real_auflieger
     }
     speichere_daten(alle_daten)
     st.success("✅ Kalibrierung gespeichert")
 
-st.header("📥 Aktuelle Volvo-Werte eingeben")
+st.header("📥 Eingabe aktueller Volvo-Werte")
 
-volvo_now_antrieb = st.number_input("Aktuelle Volvo-Anzeige – Antriebsachse", value=voll_volvo_antrieb, key="volvo_now_antrieb")
-volvo_now_auflieger = st.number_input("Aktuelle Volvo-Anzeige – Auflieger", value=voll_volvo_auflieger, key="volvo_now_auflieger")
+volvo_now_antrieb = st.number_input("Aktuelle Volvo-Anzeige – Antriebsachse", value=voll_volvo_antrieb)
+volvo_now_auflieger = st.number_input("Aktuelle Volvo-Anzeige – Auflieger", value=voll_volvo_auflieger)
 
-punkte_antrieb = [(leer_volvo_antrieb, leer_real_antrieb),
-                  (mittel_volvo_antrieb, mittel_real_antrieb),
-                  (voll_volvo_antrieb, voll_real_antrieb)]
+mittel_volvo_antrieb = st.number_input("Volvo Anzeige Teilbeladung (optional – Antrieb)", value=0.0, help="Kann leer bleiben, falls keine Zwischenmessung vorhanden")
+mittel_volvo_auflieger = st.number_input("Volvo Anzeige Teilbeladung (optional – Auflieger)", value=0.0, help="Kann leer bleiben, falls keine Zwischenmessung vorhanden")
 
-punkte_auflieger = [(leer_volvo_auflieger, leer_real_auflieger),
-                    (mittel_volvo_auflieger, mittel_real_auflieger),
-                    (voll_volvo_auflieger, voll_real_auflieger)]
-
-a1, b1 = berechne_kalibrierung(punkte_antrieb)
-a2, b2 = berechne_kalibrierung(punkte_auflieger)
+# Umrechnung
+a1, b1 = berechne_kalibrierung(leer_volvo_antrieb, leer_real_antrieb, voll_volvo_antrieb, voll_real_antrieb)
+a2, b2 = berechne_kalibrierung(leer_volvo_auflieger, leer_real_auflieger, voll_volvo_auflieger, voll_real_auflieger)
 
 real_antrieb = volvo_now_antrieb * a1 + b1
 real_auflieger = volvo_now_auflieger * a2 + b2
@@ -111,6 +92,3 @@ st.write(f"📦 Gesamtgewicht: **{real_gesamt:.2f} t**")
 
 if real_antrieb > 11.5:
     st.error("⚠️ Achtung: Antriebsachse überladen (> 11.5 t)")
-
-if real_gesamt > 40:
-    st.warning("⚠️ Gesamtgewicht möglicherweise überladen (> 40 t)")
