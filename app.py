@@ -7,7 +7,6 @@ st.title("🚛 LKW-Gewicht aus Volvo-Anzeige")
 
 DATEI = "kalibrierung.json"
 
-# Startwerte – geschätzt
 default_values = {
     "leer_volvo_antrieb": 4.7,
     "leer_real_antrieb": 7.5,
@@ -35,7 +34,6 @@ def speichere_daten(daten):
 
 def berechne_kalibrierung(volvo1, real1, volvo2, real2, optional_volvo=0.0, optional_real=0.0):
     if optional_volvo > 0 and optional_real > 0:
-        # Drei-Punkt-Kalibrierung über lineare Regression
         x = [volvo1, optional_volvo, volvo2]
         y = [real1, optional_real, real2]
         xm = sum(x) / 3
@@ -61,16 +59,16 @@ with st.expander("Zugmaschine (Antriebsachse)"):
     leer_real_antrieb = st.number_input("Waage leer (Zugmaschine)", value=daten["leer_real_antrieb"])
     voll_volvo_antrieb = st.number_input("Volvo Anzeige voll (Zugmaschine)", value=daten["voll_volvo_antrieb"])
     voll_real_antrieb = st.number_input("Waage voll (Zugmaschine)", value=daten["voll_real_antrieb"])
-    teilbeladung_volvo_antrieb = st.number_input("Volvo Anzeige teilbeladen (Zugmaschine)", value=daten["teilbeladung_volvo_antrieb"], help="Optional – sonst auf 0 lassen")
-    teilbeladung_real_antrieb = st.number_input("Waage teilbeladen (Zugmaschine)", value=daten["teilbeladung_real_antrieb"], help="Optional – sonst auf 0 lassen")
+    teilbeladung_volvo_antrieb = st.number_input("Volvo Anzeige teilbeladen (Zugmaschine)", value=daten["teilbeladung_volvo_antrieb"])
+    teilbeladung_real_antrieb = st.number_input("Waage teilbeladen (Zugmaschine)", value=daten["teilbeladung_real_antrieb"])
 
 with st.expander("Auflieger"):
     leer_volvo_auflieger = st.number_input("Volvo Anzeige leer (Auflieger)", value=daten["leer_volvo_auflieger"])
     leer_real_auflieger = st.number_input("Waage leer (Auflieger)", value=daten["leer_real_auflieger"])
     voll_volvo_auflieger = st.number_input("Volvo Anzeige voll (Auflieger)", value=daten["voll_volvo_auflieger"])
     voll_real_auflieger = st.number_input("Waage voll (Auflieger)", value=daten["voll_real_auflieger"])
-    teilbeladung_volvo_auflieger = st.number_input("Volvo Anzeige teilbeladen (Auflieger)", value=daten["teilbeladung_volvo_auflieger"], help="Optional – sonst auf 0 lassen")
-    teilbeladung_real_auflieger = st.number_input("Waage teilbeladen (Auflieger)", value=daten["teilbeladung_real_auflieger"], help="Optional – sonst auf 0 lassen")
+    teilbeladung_volvo_auflieger = st.number_input("Volvo Anzeige teilbeladen (Auflieger)", value=daten["teilbeladung_volvo_auflieger"])
+    teilbeladung_real_auflieger = st.number_input("Waage teilbeladen (Auflieger)", value=daten["teilbeladung_real_auflieger"])
 
 if st.button("💾 Kalibrierung speichern"):
     alle_daten[kennzeichen] = {
@@ -90,12 +88,9 @@ if st.button("💾 Kalibrierung speichern"):
     speichere_daten(alle_daten)
     st.success("✅ Kalibrierung gespeichert")
 
-st.header("📥 Eingabe aktueller Volvo-Werte")
-
 volvo_now_antrieb = st.number_input("Aktuelle Volvo-Anzeige – Zugmaschine", value=voll_volvo_antrieb)
 volvo_now_auflieger = st.number_input("Aktuelle Volvo-Anzeige – Auflieger", value=voll_volvo_auflieger)
 
-# Umrechnung
 a1, b1 = berechne_kalibrierung(leer_volvo_antrieb, leer_real_antrieb, voll_volvo_antrieb, voll_real_antrieb, teilbeladung_volvo_antrieb, teilbeladung_real_antrieb)
 a2, b2 = berechne_kalibrierung(leer_volvo_auflieger, leer_real_auflieger, voll_volvo_auflieger, voll_real_auflieger, teilbeladung_volvo_auflieger, teilbeladung_real_auflieger)
 
@@ -108,15 +103,3 @@ st.header("📊 Ergebnis")
 st.write(f"🚛 Zugmaschine: **{real_antrieb:.2f} t**")
 st.write(f"🛻 Auflieger: **{real_auflieger:.2f} t**")
 st.write(f"📦 Gesamtgewicht: **{real_gesamt:.2f} t**")
-
-# Überladung anzeigen
-MAX_ANTRIEBSACHSE = 11.5
-ueberladung_kg = max(0, (real_antrieb - MAX_ANTRIEBSACHSE) * 1000)
-ueberladung_prozent = max(0, (real_antrieb - MAX_ANTRIEBSACHSE) / MAX_ANTRIEBSACHSE * 100)
-
-if ueberladung_kg > 0:
-    st.error(f"⚠️ Antriebsachse überladen: **{ueberladung_kg:.0f} kg** / **{ueberladung_prozent:.1f} %** über dem Limit!")
-else:
-    st.success("✅ Antriebsachse im grünen Bereich")
-
-st.info("ℹ️ Hinweis: Teilbeladung ist optional – Felder leer lassen oder 0 eingeben, wenn keine Mittelwerte vorhanden sind.")
