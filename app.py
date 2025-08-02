@@ -32,8 +32,26 @@ def speichere_daten(daten):
     with open(DATEI, "w") as f:
         json.dump(daten, f, indent=4)
 
+
 def berechne_kalibrierung(volvo1, real1, volvo2, real2, optional_volvo=0.0, optional_real=0.0):
     if optional_volvo > 0 and optional_real > 0:
+        x = [volvo1, optional_volvo, volvo2]
+        y = [real1, optional_real, real2]
+        xm = sum(x) / 3
+        ym = sum(y) / 3
+        nenner = sum((x[i] - xm)**2 for i in range(3))
+        if nenner == 0:
+            return 1.0, 0.0  # Fallback bei identischen Werten
+        a = sum((x[i] - xm)*(y[i] - ym) for i in range(3)) / nenner
+        b = ym - a * xm
+        return a, b
+    elif volvo2 - volvo1 == 0:
+        return 1.0, 0.0  # Fallback bei identischem Volvo-Wert
+    else:
+        a = (real2 - real1) / (volvo2 - volvo1)
+        b = real1 - a * volvo1
+        return a, b
+
         x = [volvo1, optional_volvo, volvo2]
         y = [real1, optional_real, real2]
         xm = sum(x) / 3
