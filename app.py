@@ -152,59 +152,54 @@ else:
 st.info("ℹ️ Hinweis: Zusatzoptionen wie Tank & Paletten sind optional und können bei Bedarf deaktiviert werden.")
 
 
-# 🚚 Schnelle Kalibrierung mit 4 Feldern und 3 Buttons
-st.header("🚚 Schnelle Kalibrierung – per Waage & Volvo-Anzeige")
+# 🚚 Neue geführte Kalibrierung per Button & Eingabe
+st.header("🛠 Geführte Kalibrierung (Leer / Teil / Voll)")
 
-st.markdown("**Schritt 1:** Aktuelle Werte eingeben (Volvo & Waage)")
+def gefuehrte_kalibrierung(titel, key_prefix, feldnamen):
+    with st.expander(titel):
+        volvo_antrieb = st.number_input("📟 Volvo-Anzeige Zugmaschine (t)", key=f"{key_prefix}_volvo_antrieb")
+        waage_antrieb = st.number_input("⚖️ Waagewert Zugmaschine (t)", key=f"{key_prefix}_waage_antrieb")
+        volvo_auflieger = st.number_input("📟 Volvo-Anzeige Auflieger (t)", key=f"{key_prefix}_volvo_auflieger")
+        waage_auflieger = st.number_input("⚖️ Waagewert Auflieger (t)", key=f"{key_prefix}_waage_auflieger")
 
-volvo_input_antrieb = st.number_input("📟 Volvo-Anzeige (Zugmaschine)", value=voll_volvo_antrieb, step=0.1)
-volvo_input_auflieger = st.number_input("📟 Volvo-Anzeige (Auflieger)", value=voll_volvo_auflieger, step=0.1)
-waage_input_antrieb = st.number_input("⚖️ Waagewert (Zugmaschine)", value=voll_real_antrieb, step=0.01)
-waage_input_auflieger = st.number_input("⚖️ Waagewert (Auflieger)", value=voll_real_auflieger, step=0.01)
+        if st.button("💾 Speichern", key=f"{key_prefix}_save"):
+            daten[feldnamen[0]] = volvo_antrieb
+            daten[feldnamen[1]] = waage_antrieb
+            daten[feldnamen[2]] = volvo_auflieger
+            daten[feldnamen[3]] = waage_auflieger
+            alle_daten[kennzeichen] = daten
+            speichere_daten(alle_daten)
+            st.success(f"✅ Kalibrierung '{titel}' gespeichert!")
 
-def speichern_kalibrierpunkt(typ):
-    if typ == "leer":
-        daten["leer_volvo_antrieb"] = volvo_input_antrieb
-        daten["leer_real_antrieb"] = waage_input_antrieb
-        daten["leer_volvo_auflieger"] = volvo_input_auflieger
-        daten["leer_real_auflieger"] = waage_input_auflieger
-    elif typ == "teil":
-        daten["teilbeladung_volvo_antrieb"] = volvo_input_antrieb
-        daten["teilbeladung_real_antrieb"] = waage_input_antrieb
-        daten["teilbeladung_volvo_auflieger"] = volvo_input_auflieger
-        daten["teilbeladung_real_auflieger"] = waage_input_auflieger
-    elif typ == "voll":
-        daten["voll_volvo_antrieb"] = volvo_input_antrieb
-        daten["voll_real_antrieb"] = waage_input_antrieb
-        daten["voll_volvo_auflieger"] = volvo_input_auflieger
-        daten["voll_real_auflieger"] = waage_input_auflieger
-
-    alle_daten[kennzeichen] = daten
-    speichere_daten(alle_daten)
-    st.success(f"✅ Kalibrierpunkt '{typ}' gespeichert!")
+# Drei große Buttons, je einer öffnet eine Eingabemaske
+st.subheader("📌 Bitte passende Kalibrierstufe wählen:")
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    if st.button("🟢 LEER speichern"):
-        speichern_kalibrierpunkt("leer")
+    if st.button("🟢 Leer eingeben"):
+        st.session_state["show_leer"] = True
 with col2:
-    if st.button("🟡 TEILBELADEN speichern"):
-        speichern_kalibrierpunkt("teil")
+    if st.button("🟡 Teilbeladen eingeben"):
+        st.session_state["show_teil"] = True
 with col3:
-    if st.button("🔵 VOLL speichern"):
-        speichern_kalibrierpunkt("voll")
+    if st.button("🔵 Voll eingeben"):
+        st.session_state["show_voll"] = True
 
-# Statusanzeige
-anzahl_punkte = sum([
-    1 if daten["leer_volvo_antrieb"] > 0 and daten["leer_real_antrieb"] > 0 else 0,
-    1 if daten["voll_volvo_antrieb"] > 0 and daten["voll_real_antrieb"] > 0 else 0,
-    1 if daten["teilbeladung_volvo_antrieb"] > 0 and daten["teilbeladung_real_antrieb"] > 0 else 0
-])
+# Anzeigen je nach Auswahl
+if st.session_state.get("show_leer", False):
+    gefuehrte_kalibrierung("🚛 Leer-Kalibrierung", "leer", [
+        "leer_volvo_antrieb", "leer_real_antrieb",
+        "leer_volvo_auflieger", "leer_real_auflieger"
+    ])
 
-if anzahl_punkte >= 2:
-    st.success("🟢 Kalibriert (mind. 2 Punkte vorhanden)")
-elif anzahl_punkte == 1:
-    st.warning("🟡 Nur 1 Punkt – bitte ergänzen")
-else:
-    st.error("🔴 Nicht kalibriert")
+if st.session_state.get("show_teil", False):
+    gefuehrte_kalibrierung("📦 Teilbeladen-Kalibrierung", "teil", [
+        "teilbeladung_volvo_antrieb", "teilbeladung_real_antrieb",
+        "teilbeladung_volvo_auflieger", "teilbeladung_real_auflieger"
+    ])
 
+if st.session_state.get("show_voll", False):
+    gefuehrte_kalibrierung("🏋️‍♂️ Voll-Kalibrierung", "voll", [
+        "voll_volvo_antrieb", "voll_real_antrieb",
+        "voll_volvo_auflieger", "voll_real_auflieger"
+    ])
