@@ -52,16 +52,13 @@ def berechne_kalibrierung(volvo1, real1, volvo2, real2, optional_volvo=0.0, opti
         b = real1 - a * volvo1
         return a, b
 
-# Kennzeichen
 kennzeichen = st.text_input("Kennzeichen eingeben:", value="WL782GW")
 alle_daten = lade_daten()
 daten = alle_daten.get(kennzeichen, default_values)
 
-# Aktuelle Volvo-Anzeigen
 volvo_now_antrieb = st.number_input("Aktuelle Volvo-Anzeige – Zugmaschine", value=daten["voll_volvo_antrieb"])
 volvo_now_auflieger = st.number_input("Aktuelle Volvo-Anzeige – Auflieger", value=daten["voll_volvo_auflieger"])
 
-# Zusatzoptionen
 nutze_tank = st.checkbox("⛽ Tankfüllstand berücksichtigen?")
 tank_kg = 0
 if nutze_tank:
@@ -76,7 +73,6 @@ if nutze_paletten:
     gewicht_pro_palette = 25
     paletten_kg = paletten_anzahl * gewicht_pro_palette
 
-# Berechnung
 a1, b1 = berechne_kalibrierung(daten["leer_volvo_antrieb"], daten["leer_real_antrieb"],
                                daten["voll_volvo_antrieb"], daten["voll_real_antrieb"],
                                daten["teilbeladung_volvo_antrieb"], daten["teilbeladung_real_antrieb"])
@@ -90,14 +86,12 @@ real_gesamt = real_antrieb + real_auflieger
 zusatzgewicht = (tank_kg + paletten_kg) / 1000
 real_gesamt_korrigiert = real_gesamt + zusatzgewicht
 
-# Ergebnisanzeige
 st.header("📊 Ergebnis")
 st.write(f"🚛 Zugmaschine: **{real_antrieb:.2f} t**")
 st.write(f"🛻 Auflieger: **{real_auflieger:.2f} t**")
 st.write(f"⚙️ Zusatzgewicht: **{zusatzgewicht:.2f} t**")
 st.write(f"📦 Gesamtgewicht (inkl. Zusatz): **{real_gesamt_korrigiert:.2f} t**")
 
-# Warnung
 MAX_ANTRIEBSACHSE = 11.5
 MAX_GESAMT = 40.0
 ueber_antrieb = max(0, (real_antrieb - MAX_ANTRIEBSACHSE) * 1000)
@@ -115,7 +109,6 @@ if ueber_gesamt > 0:
 else:
     st.success("✅ Gesamtgewicht im grünen Bereich")
 
-# Neue geführte Kalibrierung
 st.header("🛠 Geführte Kalibrierung (Leer / Teil / Voll)")
 
 if "active_kalibrierung" not in st.session_state:
@@ -147,3 +140,7 @@ if auswahl:
         alle_daten[kennzeichen] = daten
         speichere_daten(alle_daten)
         st.success(f"✅ Kalibrierung '{auswahl.upper()}' gespeichert!")
+
+    if st.button("❌ Fenster schließen", key=f"{auswahl}_close"):
+        st.session_state["active_kalibrierung"] = None
+        st.experimental_rerun()
