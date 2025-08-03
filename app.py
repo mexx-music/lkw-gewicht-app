@@ -1,4 +1,3 @@
-
 import streamlit as st
 import json
 import os
@@ -143,4 +142,7 @@ if auswahl:
 
     if st.button("❌ Fenster schließen", key=f"{auswahl}_close"):
         st.session_state["active_kalibrierung"] = None
-        st.experimental_rerun()
+        try:
+            st.rerun()
+        except AttributeError:
+            st.experimental_rerun()
