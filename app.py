@@ -5,6 +5,30 @@ import os
 st.set_page_config(page_title="LKW Gewicht Rechner", page_icon="🚛")
 st.title("🚛 LKW-Gewicht aus Volvo-Anzeige")
 
+with st.expander("ℹ️ App-Info / Anleitung"):
+    st.markdown("""
+    ### ℹ️ LKW-Gewichtsrechner – Anleitung
+
+    **Was kann die App?**
+    - Schätzt dein aktuelles Gesamtgewicht anhand der Volvo-Anzeigen.
+    - Unterstützt Tankfüllstand & Paletten als Zusatzgewicht.
+    - Warnt bei Überschreitung der Achslast oder des Gesamtgewichts.
+
+    **Wie kalibrieren?**
+    1. Leer fahren → Werte eintragen unter 🟢 **„Leer eingeben“**
+    2. Voll beladen (z. B. auch 39,3 t reicht) → 🔵 **„Voll eingeben“**
+    3. Optional auch 🟡 **„Teilbeladen eingeben“**
+
+    Die App berechnet daraus automatisch eine Gewichtskurve.
+
+    **Hinweise:**
+    - Je größer der Unterschied zwischen „leer“ und „voll“, desto genauer die Berechnung.
+    - Die App ersetzt keine offizielle (geeichte) Fahrzeugwaage.
+    - Kalibrierung wird automatisch pro Kennzeichen gespeichert.
+    """)
+
+
+
 DATEI = "kalibrierung.json"
 
 default_values = {
