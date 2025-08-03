@@ -1,3 +1,4 @@
+
 import streamlit as st
 import json
 import os
@@ -51,15 +52,16 @@ def berechne_kalibrierung(volvo1, real1, volvo2, real2, optional_volvo=0.0, opti
         b = real1 - a * volvo1
         return a, b
 
+# Kennzeichen
 kennzeichen = st.text_input("Kennzeichen eingeben:", value="WL782GW")
 alle_daten = lade_daten()
 daten = alle_daten.get(kennzeichen, default_values)
 
-# 📥 Eingabe aktueller Volvo-Werte
+# Aktuelle Volvo-Anzeigen
 volvo_now_antrieb = st.number_input("Aktuelle Volvo-Anzeige – Zugmaschine", value=daten["voll_volvo_antrieb"])
 volvo_now_auflieger = st.number_input("Aktuelle Volvo-Anzeige – Auflieger", value=daten["voll_volvo_auflieger"])
 
-# ⚙️ Zusatzoptionen: Tank & Paletten
+# Zusatzoptionen
 nutze_tank = st.checkbox("⛽ Tankfüllstand berücksichtigen?")
 tank_kg = 0
 if nutze_tank:
@@ -74,6 +76,7 @@ if nutze_paletten:
     gewicht_pro_palette = 25
     paletten_kg = paletten_anzahl * gewicht_pro_palette
 
+# Berechnung
 a1, b1 = berechne_kalibrierung(daten["leer_volvo_antrieb"], daten["leer_real_antrieb"],
                                daten["voll_volvo_antrieb"], daten["voll_real_antrieb"],
                                daten["teilbeladung_volvo_antrieb"], daten["teilbeladung_real_antrieb"])
@@ -87,54 +90,60 @@ real_gesamt = real_antrieb + real_auflieger
 zusatzgewicht = (tank_kg + paletten_kg) / 1000
 real_gesamt_korrigiert = real_gesamt + zusatzgewicht
 
+# Ergebnisanzeige
 st.header("📊 Ergebnis")
 st.write(f"🚛 Zugmaschine: **{real_antrieb:.2f} t**")
 st.write(f"🛻 Auflieger: **{real_auflieger:.2f} t**")
 st.write(f"⚙️ Zusatzgewicht: **{zusatzgewicht:.2f} t**")
 st.write(f"📦 Gesamtgewicht (inkl. Zusatz): **{real_gesamt_korrigiert:.2f} t**")
 
+# Warnung
+MAX_ANTRIEBSACHSE = 11.5
+MAX_GESAMT = 40.0
+ueber_antrieb = max(0, (real_antrieb - MAX_ANTRIEBSACHSE) * 1000)
+ueber_antrieb_pct = max(0, (real_antrieb - MAX_ANTRIEBSACHSE) / MAX_ANTRIEBSACHSE * 100)
+ueber_gesamt = max(0, (real_gesamt_korrigiert - MAX_GESAMT) * 1000)
+ueber_gesamt_pct = max(0, (real_gesamt_korrigiert - MAX_GESAMT) / MAX_GESAMT * 100)
+
+if ueber_antrieb > 0:
+    st.error(f"⚠️ Antriebsachse überladen: **{ueber_antrieb:.0f} kg** / **{ueber_antrieb_pct:.1f}%**")
+else:
+    st.success("✅ Antriebsachse im grünen Bereich")
+
+if ueber_gesamt > 0:
+    st.error(f"⚠️ Gesamtgewicht überladen: **{ueber_gesamt:.0f} kg** / **{ueber_gesamt_pct:.1f}%**")
+else:
+    st.success("✅ Gesamtgewicht im grünen Bereich")
+
 # Neue geführte Kalibrierung
 st.header("🛠 Geführte Kalibrierung (Leer / Teil / Voll)")
 
-def gefuehrte_kalibrierung(titel, key_prefix, feldnamen):
-    with st.expander(titel):
-        volvo_antrieb = st.number_input("📟 Volvo-Anzeige Zugmaschine (t)", key=f"{key_prefix}_volvo_antrieb")
-        waage_antrieb = st.number_input("⚖️ Waagewert Zugmaschine (t)", key=f"{key_prefix}_waage_antrieb")
-        volvo_auflieger = st.number_input("📟 Volvo-Anzeige Auflieger (t)", key=f"{key_prefix}_volvo_auflieger")
-        waage_auflieger = st.number_input("⚖️ Waagewert Auflieger (t)", key=f"{key_prefix}_waage_auflieger")
-        if st.button("💾 Speichern", key=f"{key_prefix}_save"):
-            daten[feldnamen[0]] = volvo_antrieb
-            daten[feldnamen[1]] = waage_antrieb
-            daten[feldnamen[2]] = volvo_auflieger
-            daten[feldnamen[3]] = waage_auflieger
-            alle_daten[kennzeichen] = daten
-            speichere_daten(alle_daten)
-            st.success(f"✅ Kalibrierung '{titel}' gespeichert!")
+if "active_kalibrierung" not in st.session_state:
+    st.session_state["active_kalibrierung"] = None
 
-st.subheader("📌 Bitte passende Kalibrierstufe wählen:")
 col1, col2, col3 = st.columns(3)
 with col1:
     if st.button("🟢 Leer eingeben"):
-        st.session_state["show_leer"] = True
+        st.session_state["active_kalibrierung"] = "leer"
 with col2:
     if st.button("🟡 Teilbeladen eingeben"):
-        st.session_state["show_teil"] = True
+        st.session_state["active_kalibrierung"] = "teil"
 with col3:
     if st.button("🔵 Voll eingeben"):
-        st.session_state["show_voll"] = True
+        st.session_state["active_kalibrierung"] = "voll"
 
-if st.session_state.get("show_leer", False):
-    gefuehrte_kalibrierung("🚛 Leer-Kalibrierung", "leer", [
-        "leer_volvo_antrieb", "leer_real_antrieb",
-        "leer_volvo_auflieger", "leer_real_auflieger"
-    ])
-if st.session_state.get("show_teil", False):
-    gefuehrte_kalibrierung("📦 Teilbeladen-Kalibrierung", "teil", [
-        "teilbeladung_volvo_antrieb", "teilbeladung_real_antrieb",
-        "teilbeladung_volvo_auflieger", "teilbeladung_real_auflieger"
-    ])
-if st.session_state.get("show_voll", False):
-    gefuehrte_kalibrierung("🏋️‍♂️ Voll-Kalibrierung", "voll", [
-        "voll_volvo_antrieb", "voll_real_antrieb",
-        "voll_volvo_auflieger", "voll_real_auflieger"
-    ])
+auswahl = st.session_state.get("active_kalibrierung")
+if auswahl:
+    st.markdown(f"### 📥 Bitte Werte für **{auswahl.upper()}** eingeben:")
+    volvo_zug = st.number_input("📟 Volvo-Anzeige Zugmaschine (t)", key=f"{auswahl}_volvo_zug")
+    waage_zug = st.number_input("⚖️ Waagewert Zugmaschine (t)", key=f"{auswahl}_waage_zug")
+    volvo_trailer = st.number_input("📟 Volvo-Anzeige Auflieger (t)", key=f"{auswahl}_volvo_trailer")
+    waage_trailer = st.number_input("⚖️ Waagewert Auflieger (t)", key=f"{auswahl}_waage_trailer")
+    if st.button("💾 Speichern", key=f"{auswahl}_save"):
+        daten[f"{auswahl}_volvo_antrieb"] = volvo_zug
+        daten[f"{auswahl}_real_antrieb"] = waage_zug
+        daten[f"{auswahl}_volvo_auflieger"] = volvo_trailer
+        daten[f"{auswahl}_real_auflieger"] = waage_trailer
+        alle_daten[kennzeichen] = daten
+        speichere_daten(alle_daten)
+        st.success(f"✅ Kalibrierung '{auswahl.upper()}' gespeichert!")
